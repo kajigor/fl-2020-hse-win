@@ -4,13 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6282c62dace0b879c08651b2ab227b7c8bf5fa3a47856a371849c012c9c506e0
+-- hash: e3915e35a24a9517e98f521f4531dba73e93f5ab10492579e06a579a8e3200a2
 
 name:           parsecExample
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/parsecExample#readme>
-homepage:       https://github.com/githubuser/parsecExample#readme
-bug-reports:    https://github.com/githubuser/parsecExample/issues
+description:    Please see the README on GitHub at <https://github.com/githubuser/fl-2020-hse-win/tree/L06/parsecExample#readme>
+homepage:       https://github.com/githubuser/fl-2020-hse-win/tree/L06/parsecExample#readme
+bug-reports:    https://github.com/githubuser/fl-2020-hse-win/tree/L06/parsecExample/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2020 Author name here
@@ -23,11 +23,13 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/parsecExample
+  location: https://github.com/githubuser/fl-2020-hse-win/tree/L06/parsecExample
 
 library
   exposed-modules:
       Parser
+      PrologAst
+      PrologParser
   other-modules:
       Paths_parsecExample
   hs-source-dirs:
@@ -67,6 +69,7 @@ test-suite parsecExample-test
   main-is: Test.hs
   other-modules:
       Test.Parser
+      Test.PrologParser
       Paths_parsecExample
   hs-source-dirs:
       test
