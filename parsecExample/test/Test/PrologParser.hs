@@ -123,3 +123,17 @@ unit_type = do
   fail "type type type -> type."
   fail "type x -> y -> z."
   fail "tupe x o."
+
+unit_module :: Assertion
+unit_module = do
+  let parser = parseModule
+  let success = testParserSuccess parser
+  let fail  = testParserFailure parser
+  success "module name." "name"
+  success " \t\nmodule\n\n  name_123." "name_123"
+  fail "modulo name."
+  fail "module module."
+  fail "modulename."
+  fail "mod ule name."
+  fail "module 123name."
+  fail "module name!"
