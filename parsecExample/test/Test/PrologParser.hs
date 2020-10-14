@@ -109,6 +109,28 @@ unit_typeExpr = do
   let fail  = testParserFailure parser
   success "a" (TAtom a')
   success "Y -> X" (Arrow (Var "Y") (Var "X"))
+  success "(Y -> X)" (Arrow (Var "Y") (Var "X"))
+  success "(A -> B) -> C" (Arrow (Arrow (Var "A") (Var "B")) (Var "C"))
+  success "A -> B -> C" (Arrow (Var "A") (Arrow (Var "B") (Var "C")))
+  success "list (list A) -> list A -> o" (Arrow (TAtom (Atom "list" [l $ Atom "list" [r "A"]])) (Arrow (TAtom (Atom "list" [r "A"])) (TAtom (Atom "o" []))))
+  success "pair A B -> (A -> C) -> (B -> D) -> pair C D"
+          ( Arrow
+              (TAtom $ Atom "pair" [r $ "A", r $ "B"])
+              (Arrow
+                (Arrow
+                  (Var "A")
+                  (Var "C")
+                )
+                (Arrow
+                  (Arrow
+                    (Var "B")
+                    (Var "D")
+                  )
+                  (TAtom $ Atom "pair" [r $ "C", r $ "D"])
+                )
+              )
+          )
+
 
 unit_type :: Assertion
 unit_type = do
@@ -119,6 +141,8 @@ unit_type = do
   success "type a b -> X." (TypeDef "a" (Arrow (TAtom b') (Var "X")))
   success "type filter (A -> o) -> list a -> list a -> o." (TypeDef "filter" (Arrow (Arrow (Var "A") (TAtom (Atom "o" []))) (Arrow (TAtom (Atom "list" [l $ Atom "a" []])) (Arrow (TAtom $ Atom "list" [l $ Atom "a" []]) (TAtom (Atom "o" []))))))
   success "type filter (A -> o) -> list A -> list A -> o." (TypeDef "filter" (Arrow (Arrow (Var "A") (TAtom (Atom "o" []))) (Arrow (TAtom (Atom "list" [r "A"])) (Arrow (TAtom $ Atom "list" [r "A"]) (TAtom (Atom "o" []))))))
+  success "type a (((b)))." (TypeDef "a" (TAtom b'))
+  success "type d a -> (((b)))." (TypeDef "d" (Arrow (TAtom a') (TAtom b')))
 
   fail "type type type -> type."
   fail "type x -> y -> z."
