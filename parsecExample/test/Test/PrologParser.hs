@@ -80,6 +80,7 @@ unit_atom = do
   fail "a (a"
   fail "X a"
   fail "(a)"
+  fail "a ((b c) (b c))"
 
 l = Left
 r = Right
