@@ -100,7 +100,7 @@ relationBodyExpr =
   fmap RAtom (try atom) <|> brackets relationBodyDisj
 
 parseModule :: Parser String
-parseModule = undefined
+parseModule = do many space; reserved "module"; name <- identifier; dot; return name
 
 typeExpr :: Parser Type
 typeExpr = undefined
@@ -115,6 +115,6 @@ parseProgram :: String -> Either ParseError PrologProgram
 parseProgram =
   parse (do r <- prog; eof; return r) ""
 
-parseAtom :: String -> Either ParseError Atom
-parseAtom =
-  parse (do r <- atom; eof; return r) ""
+parseModul' :: String -> Either ParseError String
+parseModul' =
+  parse (do r <- parseModule; eof; return r) ""
