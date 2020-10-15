@@ -18,10 +18,12 @@ languageDef =
 
 lexer = Token.makeTokenParser languageDef
 
+parseString :: Parser a -> String -> Either ParseError a
+parseString p =
+  parse (do r <- p; eof; return r) ""
+
 identifier :: Parser String
-identifier = do
-  i <- Token.identifier lexer
-  return i
+identifier = Token.identifier lexer
 
 var :: Parser String
 var = do
@@ -34,6 +36,8 @@ whiteSpace = Token.whiteSpace lexer
 reservedOp = Token.reservedOp lexer
 reserved = Token.reserved lexer
 brackets = Token.parens lexer
+squares = Token.squares lexer
+symbol = Token.symbol lexer
 dot = Token.dot lexer
 
 atom :: Parser Atom
@@ -44,16 +48,33 @@ atom = do
 
 parseAtomArg :: Parser (Either Atom String)
 parseAtomArg = 
-  (fmap Left (do
+  fmap Left (do
   head <- identifier
   return Atom {atomHead = head, atomArgs = []}
-                         )) <|>
-  (fmap Right var) <|>
-  (manyBrackets (fmap Left atom <|> fmap Right var))
+            ) <|>
+  fmap Left list <|>
+  fmap Right var <|>
+  manyBrackets (fmap Left atom <|> fmap Left list <|> fmap Right var)
 
 manyBrackets :: Parser a -> Parser a
 manyBrackets p = brackets (manyBrackets p) <|> p
 
+cons :: Either Atom String -> Either Atom String -> Atom
+cons x y = Atom "cons" [x, y]
+
+nil :: Atom
+nil = Atom "nil" []
+
+list :: Parser Atom
+list = squares listInternal where
+  parseListElem = fmap Left atom <|> fmap Right var <|> fmap Left list
+  parseStandardListTail = do symbol ","; fmap (foldr (\x y -> Left $ cons x y) (Left nil)) $ sepBy1 parseListElem $ symbol ","
+  parseVerticalLineListTail = do symbol "|"; fmap Right var
+  listInternal = (do
+    head <- parseListElem
+    tail <- parseStandardListTail <|> parseVerticalLineListTail <|> return (Left nil)
+    return $ cons head tail
+                 ) <|> return nil
 
 relation :: Parser Relation
 relation = do
@@ -64,24 +85,17 @@ relation = do
 
 parseDisjOrNothing :: Parser (Maybe RelationBody)
 parseDisjOrNothing = 
-  (fmap Just (do 
+  fmap Just (do 
     reservedOp ":-"
-    d <- parseDisj
-    return d
-             )) <|> 
-  (do; return Nothing)
-
-parseList :: Parser a -> Parser b -> Parser [a]
-parseList elem sep = do
-  h <- elem
-  t <- many (sep >> elem)
-  return (h:t)
+    parseDisj
+            ) <|> 
+  return Nothing
 
 parseDisj :: Parser RelationBody
-parseDisj = fmap (foldr1 Disj) $ parseList parseConj (reservedOp ";")
+parseDisj = fmap (foldr1 Disj) $ sepBy1 parseConj (reservedOp ";")
 
 parseConj :: Parser RelationBody
-parseConj = fmap (foldr1 Conj) $ parseList parseBodyElem (reservedOp ",")
+parseConj = fmap (foldr1 Conj) $ sepBy1 parseBodyElem (reservedOp ",")
 
 parseBodyElem :: Parser RelationBody
 parseBodyElem = fmap RAtom atom <|> brackets parseDisj
@@ -93,14 +107,18 @@ parseModule = do
   dot
   return name
 
+parseModuleOrNothing :: Parser (Maybe String)
+parseModuleOrNothing = fmap Just parseModule <|> return Nothing
+
 typeExpr :: Parser Type
-typeExpr = fmap (foldr1 Arrow) $ parseList parseTypeElem (reservedOp "->")
+typeExpr = fmap (foldr1 Arrow) $ sepBy1 parseTypeElem (reservedOp "->")
 
 parseTypeElem :: Parser Type
 parseTypeElem = fmap TAtom atom <|> fmap Var var <|> brackets typeExpr
 
 typ :: Parser TypeDef
 typ = do
+  spaces
   reserved "type"
   name <- identifier
   t <- typeExpr
@@ -108,4 +126,9 @@ typ = do
   return $ TypeDef name t
 
 prog :: Parser PrologProgram
-prog = undefined
+prog = do
+  spaces
+  m  <- parseModuleOrNothing
+  ts <- many typ
+  rs <- many relation
+  return Program {pModule = m, types = ts, rels = rs}

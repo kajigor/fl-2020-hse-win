@@ -7,10 +7,6 @@ import Data.Either (isLeft)
 import PrologParser
 import PrologAst
 
-parseString :: Parser a -> String -> Either ParseError a
-parseString p =
-  parse (do r <- p; eof; return r) ""
-
 testParserSuccess :: (Eq a, Show a) => Parser a -> String -> a -> Assertion
 testParserSuccess p inp exp =
   parseString p inp @?= Right exp
@@ -77,9 +73,15 @@ unit_atom = do
   success "a ((b  c))  (d)" (a [l $ b [l c'], l d'])
   success "a ((b  c) )  ( d )" (a [l $ b [l c'], l d'])
   success "a((b c))(d)" (a [l $ b [l c'], l d'])
+  success "a [ \n]" (a [l $ nil])
+  success "a [b]" (a [l $ cons (l b') (l $ nil)])
+  success "a [b,  c]" (a [l $ cons (l b') (l $ cons (l c') (l $ nil))])
+  success "a (( [b,  c]))" (a [l $ cons (l b') (l $ cons (l c') (l $ nil))])
   fail "a (a"
   fail "X a"
   fail "(a)"
+  fail "[a] b c"
+  fail "[a, b]"
 
 l = Left
 r = Right
@@ -153,17 +155,14 @@ unit_module = do
   let parser = parseModule
   let success = testParserSuccess parser
   let fail  = testParserFailure parser
-  success "module name." "name"
-  success " \t\nmodule\n\n  name_123." "name_123"
+  success "module\n \t name." "name"
+  --success " \t\nmodule\n\n  name_123." "name_123" -- spaces at the beginning of module are considered in prog
   fail "modulo name."
   fail "module module."
   fail "modulename."
   fail "mod ule name."
   fail "module 123name."
   fail "module name!"
-
--- cons x y = Atom "cons" [x, y]
--- nil = Atom "nil" []
 
 unit_list :: Assertion
 unit_list = do
@@ -181,3 +180,14 @@ unit_list = do
   fail "[A,B,]"
   fail "[A,B"
   fail "]["
+
+unit_prog :: Assertion
+unit_prog = do
+  let parser = prog
+  let success = testParserSuccess parser
+  let fail = testParserFailure parser
+  success "" (Program Nothing [] []) 
+  success "\nmodule name.\n" (Program (Just "name") [] [])
+  success "\t\n type a b." (Program Nothing [TypeDef "a" (TAtom b')] [])
+  success "  a. \n  " (Program Nothing [] [Relation a' Nothing])
+  success "\n\n\t module name. type a b. \t\t a.a.\n" (Program (Just "name") [TypeDef "a" (TAtom b')] [Relation a' Nothing, Relation a' Nothing])
