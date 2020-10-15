@@ -77,6 +77,8 @@ unit_atom = do
   success "a ((b  c))  (d)" (a [l $ b [l c'], l d'])
   success "a ((b  c) )  ( d )" (a [l $ b [l c'], l d'])
   success "a((b c))(d)" (a [l $ b [l c'], l d'])
+  success "cons H T" (Atom "cons" [r "H", r "T"])
+  success "cons (cons a H) T" (Atom "cons" [l $ Atom "cons" [l a', r "H"], r "T"])
   fail "a (a"
   fail "X a"
   fail "(a)"
@@ -101,6 +103,12 @@ unit_relation = do
   success "a b:- a;b;c." (Relation (a [l b']) (Just (Disj (RAtom a') (Disj (RAtom b') (RAtom c')))))
   success "a b:- a,b,c." (Relation (a [l b']) (Just (Conj (RAtom a') (Conj (RAtom b') (RAtom c')))))
   success "a (b (c))  :- (a b) ." (Relation (a [l $ b [l c']]) (Just (RAtom (a [l b']))))
+  fail "a :- a"
+  fail "a :- ."
+  fail ":- a."
+  fail "f : - a. "
+  fail "X :- a."
+
 
 unit_typeExpr :: Assertion
 unit_typeExpr = do
@@ -181,3 +189,5 @@ unit_list = do
   fail "[A,B,]"
   fail "[A,B"
   fail "]["
+  fail "[ |T]"
+  fail "[X|T|Y]"
