@@ -5,7 +5,7 @@ import System.IO
 
 runParser :: String -> IO ()
 runParser str =
-  case parseModul' str of
+  case parseNOW str of
     Left err -> print err
     Right r -> print r
 
@@ -21,7 +21,7 @@ main :: IO ()
 main = do
   putStrLn ""
 
-  runParser "module name_123 ."
+  runParser "a a A (a A)"
 
 -- writeFile "input.txt" "a+2^3*4"
 -- parseFromFile "input.txt"
