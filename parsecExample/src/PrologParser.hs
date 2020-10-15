@@ -95,11 +95,28 @@ relationBodyExpr =
 parseModule :: Parser String
 parseModule = do spaces; reserved "module"; name <- identifier; dot; return name
 
-typeExpr :: Parser Type
-typeExpr = undefined
+typeExpr :: Parser Type -- "->" is infixr
+typeExpr =
+  let ttt =
+        try (fmap TAtom atom)
+          <|> try (fmap Var var)
+          <|> brackets (try typeExpr)
+   in try
+        ( do
+            typ1 <- ttt
+            reservedOp "->"
+            typ2 <- typeExpr
+            return $ Arrow typ1 typ2
+        )
+        <|> try ttt
 
 typ :: Parser TypeDef
-typ = undefined
+typ = do
+  reserved "type"
+  name <- identifier
+  ty <- typeExpr
+  dot
+  return $ TypeDef name ty
 
 prog :: Parser PrologProgram
 prog = undefined
@@ -108,6 +125,6 @@ parseProgram :: String -> Either ParseError PrologProgram
 parseProgram =
   parse (do r <- prog; eof; return r) ""
 
-parseNOW :: String -> Either ParseError Atom
-parseNOW =
-  parse (do r <- atom; eof; return r) ""
+-- parseNOW :: String -> Either ParseError Type
+-- parseNOW =
+--   parse (do r <- typeExpr; eof; return r) ""
