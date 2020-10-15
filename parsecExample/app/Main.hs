@@ -21,7 +21,7 @@ main :: IO ()
 main = do
   putStrLn ""
 
-  runParser "a a A (a A)"
+  runParser "aa A (a A)"
 
 -- writeFile "input.txt" "a+2^3*4"
 -- parseFromFile "input.txt"

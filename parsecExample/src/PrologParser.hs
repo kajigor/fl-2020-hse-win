@@ -57,10 +57,18 @@ parseList elem sep = do
   t <- many (sep >> elem)
   return (h : t)
 
-atom :: Parser Atom
-atom = do
-  head <- identifier
-  args <- many $ fmap Left ((many1Brackets atom) <|> (do h <- try identifier; return (Atom h []))) <|> fmap Right var
+atom :: Parser Atom -- errors might be 'expected EOF'
+atom = try complexAtom <|> try simpleAtom
+
+simpleAtom :: Parser Atom
+simpleAtom = do
+  head <- try identifier
+  return $ Atom head []
+
+complexAtom :: Parser Atom
+complexAtom = do
+  head <- try identifier
+  args <- many1 $ fmap Left (many1Brackets atom <|> simpleAtom) <|> fmap Right var
   return $ Atom head args
 
 relation :: Parser Relation
@@ -85,7 +93,7 @@ relationBodyExpr =
   fmap RAtom (try atom) <|> brackets relationBodyDisj
 
 parseModule :: Parser String
-parseModule = do many space; reserved "module"; name <- identifier; dot; return name
+parseModule = do spaces; reserved "module"; name <- identifier; dot; return name
 
 typeExpr :: Parser Type
 typeExpr = undefined
