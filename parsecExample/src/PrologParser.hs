@@ -2,6 +2,7 @@ module PrologParser where
 
 import Control.Monad
 import Data.Char (isLower, isUpper)
+import Data.List
 import PrologAst
 import System.IO
 import Text.ParserCombinators.Parsec
@@ -119,7 +120,18 @@ typ = do
   return $ TypeDef name ty
 
 prog :: Parser PrologProgram
-prog = undefined
+prog =
+  try
+    ( do
+        pModule <- parseModule
+        types <- many typ
+        rels <- many relation
+        return $ Program (Just pModule) types rels
+    )
+    <|> do
+      types <- many typ
+      rels <- many relation
+      return $ Program Nothing types rels
 
 parseProgram :: String -> Either ParseError PrologProgram
 parseProgram =

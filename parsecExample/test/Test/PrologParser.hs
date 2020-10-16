@@ -6,6 +6,7 @@ import Data.Either (isLeft)
 
 import PrologParser
 import PrologAst
+import Data.List
 
 parseString :: Parser a -> String -> Either ParseError a
 parseString p =
@@ -77,6 +78,8 @@ unit_atom = do
   success "a ((b  c))  (d)" (a [l $ b [l c'], l d'])
   success "a ((b  c) )  ( d )" (a [l $ b [l c'], l d'])
   success "a((b c))(d)" (a [l $ b [l c'], l d'])
+  success "cons H T" (Atom "cons" [r "H", r "T"])
+  success "cons (cons a H) T" (Atom "cons" [l $ Atom "cons" [l a', r "H"], r "T"])
   fail "a (a"
   fail "X a"
   fail "(a)"
@@ -102,6 +105,12 @@ unit_relation = do
   success "a b:- a;b;c." (Relation (a [l b']) (Just (Disj (RAtom a') (Disj (RAtom b') (RAtom c')))))
   success "a b:- a,b,c." (Relation (a [l b']) (Just (Conj (RAtom a') (Conj (RAtom b') (RAtom c')))))
   success "a (b (c))  :- (a b) ." (Relation (a [l $ b [l c']]) (Just (RAtom (a [l b']))))
+  fail "a :- a"
+  fail "a :- ."
+  fail ":- a."
+  fail "f : - a. "
+  fail "X :- a."
+
 
 unit_typeExpr :: Assertion
 unit_typeExpr = do
@@ -166,19 +175,21 @@ unit_module = do
 -- cons x y = Atom "cons" [x, y]
 -- nil = Atom "nil" []
 
--- unit_list :: Assertion
--- unit_list = do
---   let parser = list
---   let success = testParserSuccess parser
---   let fail = testParserFailure parser
---   success "[]" (nil)
---   success "[a]" (cons (l $ a') (l $ nil))
---   success "[A,B]" (cons (r "A") (l $ cons (r "B") (l $ nil)))
---   success "[a (b c), B, C]" (cons (l $ a [l $ b [l $ c']]) (l $ cons (r "B") (l $ cons (r "C") (l $ nil))))
---   success "[a | T]" (cons (l a') (r "T") )
---   success "[ [a] | T ]" (cons (l $ cons (l a') (l $ nil)) (r "T") )
---   success "[ [H | T], a ]" (cons (l $ cons (r "H") (r "T")) (l $ cons (l $ a') (l $ nil)) )
---   fail "[a | a]"
---   fail "[A,B,]"
---   fail "[A,B"
---   fail "]["
+unit_list :: Assertion
+unit_list = do
+  let parser = list
+  let success = testParserSuccess parser
+  let fail = testParserFailure parser
+  success "[]" (nil)
+  success "[a]" (cons (l $ a') (l $ nil))
+  success "[A,B]" (cons (r "A") (l $ cons (r "B") (l $ nil)))
+  success "[a (b c), B, C]" (cons (l $ a [l $ b [l $ c']]) (l $ cons (r "B") (l $ cons (r "C") (l $ nil))))
+  success "[a | T]" (cons (l a') (r "T") )
+  success "[ [a] | T ]" (cons (l $ cons (l a') (l $ nil)) (r "T") )
+  success "[ [H | T], a ]" (cons (l $ cons (r "H") (r "T")) (l $ cons (l $ a') (l $ nil)) )
+  fail "[a | a]"
+  fail "[A,B,]"
+  fail "[A,B"
+  fail "]["
+  fail "[ |T]"
+  fail "[X|T|Y]"

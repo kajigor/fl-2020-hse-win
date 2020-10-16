@@ -21,7 +21,7 @@ main :: IO ()
 main = do
   putStrLn ""
 
-  -- runParser "a (a A)"
+  runParser "module m. type tap (A -> o) -> lst A -> o. var k p :- (pak) ; (p , k)."
 
-  writeFile "input.txt" "a+2^3*4"
-  parseFromFile "input.txt"
+-- writeFile "input.txt" "a+2^3*4"
+-- parseFromFile "input.txt"
