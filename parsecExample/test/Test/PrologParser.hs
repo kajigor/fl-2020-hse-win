@@ -6,6 +6,7 @@ import Data.Either (isLeft)
 
 import PrologParser
 import PrologAst
+import Data.List
 
 parseString :: Parser a -> String -> Either ParseError a
 parseString p =
@@ -82,6 +83,7 @@ unit_atom = do
   fail "a (a"
   fail "X a"
   fail "(a)"
+  fail "a ((b c) (b c))"
 
 l = Left
 r = Right
