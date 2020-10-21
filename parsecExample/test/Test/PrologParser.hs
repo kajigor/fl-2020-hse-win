@@ -82,6 +82,8 @@ unit_atom = do
   success "a ((b  c))  (d)" (a [l $ b [l c'], l d'])
   success "a ((b  c) )  ( d )" (a [l $ b [l c'], l d'])
   success "a((b c))(d)" (a [l $ b [l c'], l d'])
+  success "cons H T" (Atom "cons" [r "H", r "T"])
+  success "cons (cons a H) T" (Atom "cons" [l $ Atom "cons" [l a', r "H"], r "T"])
   success "a [ \n]" (a [l $ nil])
   success "a [b]" (a [l $ cons (l b') (l $ nil)])
   success "a [b,  c]" (a [l $ cons (l b') (l $ cons (l c') (l $ nil))])
@@ -113,6 +115,11 @@ unit_relation = do
   success "a b:- a,b,c." (Relation (a [l b']) (Just (Conj (RAtom a') (Conj (RAtom b') (RAtom c')))))
   success "a (b (c))  :- (a b) ." (Relation (a [l $ b [l c']]) (Just (RAtom (a [l b']))))
   success "module [module]." (Relation (m [l $ cons (l $ m') (l $ nil)]) Nothing)
+  fail "a :- a"
+  fail "a :- ."
+  fail ":- a."
+  fail "f : - a. "
+  fail "X :- a."
 
 unit_typeExpr :: Assertion
 unit_typeExpr = do
@@ -196,6 +203,8 @@ unit_list = do
   fail "[A,B,]"
   fail "[A,B"
   fail "]["
+  fail "[ |T]"
+  fail "[X|T|Y]"
 
 unit_prog :: Assertion
 unit_prog = do
@@ -213,5 +222,3 @@ unit_prog = do
   success "module type. type type type. a. type type type." (Program (Just "type") [TypeDef "type" (TAtom t')] [Relation a' Nothing, Relation (t [l t', l t']) Nothing])
   success "type type [type]." (Program Nothing [] [Relation (t [l t', l $ cons (l $ t') (l $ nil)]) Nothing])
   success "type [type]." (Program Nothing [] [Relation (t [l $ cons (l $ t') (l $ nil)]) Nothing])
-
-
