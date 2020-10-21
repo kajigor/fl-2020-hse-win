@@ -12,7 +12,6 @@ import PrologAst
 languageDef =
   emptyDef { Token.identStart = lower
            , Token.identLetter = alphaNum <|> char '_'
-           , Token.reservedNames = ["module", "type"]
            , Token.reservedOpNames = [",", ";", "->", ":-"]
            }
 
@@ -100,15 +99,18 @@ parseConj = fmap (foldr1 Conj) $ sepBy1 parseBodyElem (reservedOp ",")
 parseBodyElem :: Parser RelationBody
 parseBodyElem = fmap RAtom atom <|> brackets parseDisj
 
+word :: String -> Parser String
+word s = do
+  word <- string s
+  many1 space
+  return word
+
 parseModule :: Parser String
 parseModule = do
-  reserved "module"
+  word "module"
   name <- identifier
   dot
   return name
-
-parseModuleOrNothing :: Parser (Maybe String)
-parseModuleOrNothing = fmap Just parseModule <|> return Nothing
 
 typeExpr :: Parser Type
 typeExpr = fmap (foldr1 Arrow) $ sepBy1 parseTypeElem (reservedOp "->")
@@ -119,7 +121,7 @@ parseTypeElem = fmap TAtom atom <|> fmap Var var <|> brackets typeExpr
 typ :: Parser TypeDef
 typ = do
   spaces
-  reserved "type"
+  word "type"
   name <- identifier
   t <- typeExpr
   dot
@@ -128,7 +130,15 @@ typ = do
 prog :: Parser PrologProgram
 prog = do
   spaces
-  m  <- parseModuleOrNothing
-  ts <- many typ
+  m <- try (fmap Just parseModule) <|> return Nothing
+  ts <- try (many1 typ) <|> return []
   rs <- many relation
   return Program {pModule = m, types = ts, rels = rs}
+
+
+
+
+
+
+
+
