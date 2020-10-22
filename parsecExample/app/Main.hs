@@ -1,36 +1,30 @@
 module Main where
 
-import Parser
 import System.IO
+import System.Environment 
+import Data.List
+import Text.ParserCombinators.Parsec as All hiding (parseFromFile)
+import PrologParser
 
-
-runParser :: String -> IO ()
-runParser str =
-  case parseString str of
-    Left err -> print err
-    Right r -> print r
-
-parseFromFile :: FilePath -> IO ()
-parseFromFile path = do
+parseFromFile :: Show a => Parser a -> FilePath -> IO ()
+parseFromFile parser path = do
   input <- readFile path
-  case parseString input of
+  case parseString parser input of
     Left err -> print err
     Right r -> do
       writeFile (path ++ ".out") (show r)
 
-
 main :: IO ()
 main = do
-  putStrLn ""
+  args <- getArgs
+  let flag = head args 
+  let file = head $ tail args
+  case flag of
+    "--atom" -> parseFromFile atom file 
+    "--typeexpr" -> parseFromFile typeExpr file 
+    "--type" -> parseFromFile typ file 
+    "--module" -> parseFromFile parseModule file 
+    "--relation" -> parseFromFile relation file 
+    "--list" -> parseFromFile list file 
+    "--prog" -> parseFromFile prog file
 
-  runParser "13"
-  runParser "42"
-  runParser "007"
-  runParser "a"
-  runParser "(a+13)*42"
-  runParser "a+13*42"
-  runParser "1^2^3^4"
-  runParser "a+2^3*4"
-
-  writeFile "input.txt" "a+2^3*4"
-  parseFromFile "input.txt"
